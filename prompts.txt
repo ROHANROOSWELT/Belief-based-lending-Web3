@@ -1,0 +1,348 @@
+Perfect. I’ll now give you **clean, detailed, copy-paste-ready prompts for EACH MODULE**, written exactly to match **your clarified project logic**, with **no fluff and no ambiguity**.
+
+I’ll first restate the project **once**, then give **module prompts** that *logically enforce it*.
+This is the level judges and senior devs expect.
+
+---
+
+# 🔁 Final Locked Project Definition (Authoritative)
+
+> Any person can lend money.
+> Any person can borrow money by locking collateral.
+>
+> Unlike Aave, liquidation does **not** happen immediately when price drops.
+> A **belief window** is granted to the borrower to recover.
+>
+> Interest dynamically adjusts based on ETH price movement:
+>
+> * ETH price increases → interest decreases
+> * ETH price decreases slightly → interest increases slightly
+> * ETH price decreases drastically → interest increases drastically
+>
+> However, **if the borrower is detected as becoming bankrupt**, liquidation occurs immediately to protect the lender.
+
+This is **Belief-Based Lending (BBL)** on Sui.
+
+---
+
+# 🧩 MODULE-BY-MODULE DETAILED PROMPTS
+
+Each prompt is **self-contained**.
+You can use each one to:
+
+* implement a `.move` file
+* explain architecture
+* justify design to judges
+
+---
+
+## 📦 MODULE 1 — `loan_core.move`
+
+### (Loan Creation & Asset Ownership)
+
+### 🔹 Purpose
+
+Create and store a loan as a **first-class on-chain object**.
+
+### 🔹 Detailed Prompt
+
+> Implement a Sui Move module that defines a `LoanObject` representing a single lending agreement.
+>
+> Each `LoanObject` must:
+>
+> * represent exactly one loan
+> * store borrower and lender addresses
+> * lock borrower collateral on-chain
+> * track borrowed amount
+> * track loan status (`Healthy`, `Belief`, `Liquidated`)
+> * store current interest tier
+> * store belief window expiry timestamp
+>
+> Implement a `create_loan` function where:
+>
+> * the lender provides loan funds
+> * the borrower provides collateral
+> * lender funds are transferred to the borrower immediately
+> * collateral is locked inside the `LoanObject`
+> * the loan starts in `Healthy` state
+>
+> The module must not:
+>
+> * perform liquidation
+> * calculate interest
+> * evaluate health
+>
+> Ensure:
+>
+> * one loan = one object
+> * no global lending pools
+> * ownership and roles are explicit
+
+---
+
+## 📦 MODULE 2 — `price_oracle_mock.move`
+
+### (ETH Price Simulation for Hackathon)
+
+### 🔹 Purpose
+
+Provide ETH price data for interest and risk logic.
+
+### 🔹 Detailed Prompt
+
+> Implement a mock ETH price feed module for demonstration purposes.
+>
+> The module must:
+>
+> * store a simulated ETH price
+> * allow controlled updates (increase, mild decrease, severe decrease)
+> * expose a function to read the current ETH price
+>
+> This module must:
+>
+> * NOT rely on real oracles
+> * be clearly marked as demo-only
+> * act as the single source of price truth for the protocol
+
+---
+
+## 📦 MODULE 3 — `interest_model.move`
+
+### (Dynamic Interest Based on ETH Movement)
+
+### 🔹 Purpose
+
+Adjust lender compensation based on market stress.
+
+### 🔹 Detailed Prompt
+
+> Implement a tier-based interest model that adjusts interest according to ETH price movement.
+>
+> The module must:
+>
+> * compare current ETH price to a previous reference price
+> * classify market movement into tiers
+>
+> Interest rules:
+>
+> * ETH price increases → interest decreases
+> * ETH price decreases slightly → interest increases slightly
+> * ETH price decreases significantly → interest increases significantly
+>
+> Implement:
+>
+> * an `InterestTier` enum or integer scale
+> * a function that assigns the correct interest tier
+>
+> The module must:
+>
+> * only assign interest tiers
+> * not perform real interest math
+> * store interest tier in the `LoanObject`
+
+---
+
+## 📦 MODULE 4 — `health_engine.move`
+
+### (Solvency & Bankruptcy Detection)
+
+### 🔹 Purpose
+
+Detect when a borrower is at risk or bankrupt.
+
+### 🔹 Detailed Prompt
+
+> Implement a loan health evaluation module that determines whether a loan is:
+>
+> * healthy
+> * unsafe (eligible for belief window)
+> * bankrupt (must be liquidated immediately)
+>
+> The module must:
+>
+> * calculate collateral value using ETH price
+> * compare it to borrowed amount
+>
+> Define two thresholds:
+>
+> * **unsafe threshold** → triggers belief window
+> * **bankruptcy threshold** → triggers immediate liquidation
+>
+> Implement functions:
+>
+> * `is_unsafe()`
+> * `is_bankrupt()`
+>
+> This module must:
+>
+> * NOT perform liquidation
+> * only signal risk states
+
+---
+
+## 📦 MODULE 5 — `belief_window.move` ⭐ (CORE MODULE)
+
+### (Delayed Liquidation Logic)
+
+### 🔹 Purpose
+
+Prevent panic liquidations and enforce belief.
+
+### 🔹 Detailed Prompt
+
+> Implement a belief window mechanism for loans detected as unsafe but not bankrupt.
+>
+> When a loan becomes unsafe:
+>
+> * it must enter `Belief` state
+> * liquidation must be temporarily blocked
+> * a belief window timer must start
+>
+> The module must:
+>
+> * store belief window expiry timestamp
+> * allow belief window to end early if health improves
+> * prevent liquidation during active belief
+>
+> Implement:
+>
+> * `enter_belief_window()`
+> * `is_belief_active()`
+>
+> Ensure:
+>
+> * belief window is per-loan
+> * belief does NOT apply to bankrupt loans
+
+---
+
+## 📦 MODULE 6 — `recovery_actions.move`
+
+### (Borrower Recovery During Belief)
+
+### 🔹 Purpose
+
+Allow borrower to save their position.
+
+### 🔹 Detailed Prompt
+
+> Implement borrower recovery functions usable only during an active belief window.
+>
+> The borrower must be able to:
+>
+> * add more collateral
+> * repay part of the debt
+>
+> The module must:
+>
+> * re-evaluate loan health after recovery
+> * immediately exit belief state if loan becomes healthy
+>
+> Ensure:
+>
+> * only the borrower can call recovery functions
+> * recovery is rejected if belief window expired
+
+---
+
+## 📦 MODULE 7 — `liquidation.move`
+
+### (Final Protection for Lender)
+
+### 🔹 Purpose
+
+Protect lenders from loss.
+
+### 🔹 Detailed Prompt
+
+> Implement liquidation logic with **two paths**:
+>
+> **Immediate liquidation**
+>
+> * if loan is detected as bankrupt
+>
+> **Delayed liquidation**
+>
+> * if belief window expired
+> * and loan remains unsafe
+>
+> On liquidation:
+>
+> * mark loan as `Liquidated`
+> * transfer collateral to lender
+>
+> The module must:
+>
+> * strictly prevent liquidation during active belief
+> * allow immediate liquidation only for bankruptcy cases
+
+---
+
+## 📦 MODULE 8 — `demo_controller.move` / frontend
+
+### (Judge Experience Layer)
+
+### 🔹 Purpose
+
+Make the logic visible.
+
+### 🔹 Detailed Prompt
+
+> Implement a demo controller or frontend that:
+>
+> * opens a loan
+> * simulates ETH price changes
+> * shows interest tier changes
+> * displays belief countdown
+> * allows recovery or liquidation
+>
+> The demo must clearly show:
+>
+> * belief delaying liquidation
+> * bankruptcy overriding belief
+> * interest reacting to price movement
+
+---
+
+# 🔗 FULL LOGIC FLOW (Put This in README)
+
+```
+loan_core
+   ↓
+price_oracle_mock
+   ↓
+interest_model
+   ↓
+health_engine
+   ↓
+belief_window (if unsafe)
+   ↓
+recovery_actions
+   ↓
+liquidation (if belief fails or bankrupt)
+```
+
+---
+
+# 🧠 One-Sentence Judge Explanation (Memorize)
+
+> “Anti-Gravity replaces instant liquidation with belief windows and volatility-based interest, while still enforcing immediate liquidation when bankruptcy risk threatens lenders.”
+
+---
+
+## ✅ Final Confirmation
+
+* ✔ Your idea is **coherent**
+* ✔ The modules now **fully enforce your logic**
+* ✔ This is **not just Aave with delays**
+* ✔ Judges can clearly see **why Sui matters**
+
+---
+
+### Next step (choose ONE)
+
+1️⃣ **Design belief_window.move code**
+2️⃣ **Design health_engine thresholds**
+3️⃣ **Prepare README architecture section**
+
+From here, we only **build and polish**.
