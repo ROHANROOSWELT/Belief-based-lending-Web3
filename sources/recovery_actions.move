@@ -11,6 +11,7 @@ module belief_lending::recovery_actions {
     /// Error codes
     const EBeliefNotActive: u64 = 0;
     const EUnauthorized: u64 = 1; // If we enforce borrower check (prompt says "only borrower")
+    const ELoanIsBankrupt: u64 = 2; // Strict Principal Protection
 
     /// Check if caller is the borrower
     fun check_borrower<L, C>(loan: &LoanObject<L, C>, ctx: &TxContext) {
@@ -28,6 +29,10 @@ module belief_lending::recovery_actions {
         ctx: &TxContext
     ) {
         check_borrower(loan, ctx);
+
+        // Strict Principal Protection: Cannot recover if Bankrupt.
+        assert!(!health_engine::is_bankrupt(loan, oracle), ELoanIsBankrupt);
+
         // Enforce Belief Window
         assert!(belief_window::is_belief_active(loan, clock), EBeliefNotActive);
         let added_balance = coin::into_balance(collateral);
@@ -46,6 +51,10 @@ module belief_lending::recovery_actions {
         ctx: &TxContext
     ) {
         check_borrower(loan, ctx);
+        
+        // Strict Principal Protection: Cannot recover if Bankrupt.
+        assert!(!health_engine::is_bankrupt(loan, oracle), ELoanIsBankrupt);
+
         assert!(belief_window::is_belief_active(loan, clock), EBeliefNotActive);
 
         let amount = coin::value(&payment);

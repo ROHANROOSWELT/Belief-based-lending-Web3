@@ -1,52 +1,62 @@
 module belief_lending::interest_model {
     use belief_lending::loan_core::{Self, LoanObject};
+    use belief_lending::health_engine;
+    use belief_lending::price_oracle_mock::{PriceOracle};
 
     /// Interest Tiers
     const TIER_LOW: u64 = 1;
     const TIER_NORMAL: u64 = 2;
     const TIER_HIGH: u64 = 3;
 
-    /// Threshold for "Significant" price drop (e.g., 10%).
-    /// If new price is < 90% of old price, it's a significant drop.
-    const SIGNIFICANT_DROP_PERCENT: u64 = 10;
+    /// Thresholds in percent
+    const DROP_THRESHOLD_MODERATE: u64 = 5;
+    const DROP_THRESHOLD_HIGH: u64 = 10;
 
     /// Updates the loan's interest tier based on ETH price movement.
-    /// - `old_price`: Reference price (e.g. from previous update or loan creation).
-    /// - `new_price`: Current price from Oracle.
+    /// 
+    /// Logic:
+    /// - If Bankrupt -> STOP updates (Liquidation priority).
+    /// - If Change < 5% -> Low.
+    /// - If 5% <= Change < 10% -> Normal (Moderate).
+    /// - If Change >= 10% -> High.
     public fun update_interest_tier<L, C>(
         loan: &mut LoanObject<L, C>,
+        oracle: &PriceOracle,
         old_price: u64,
         new_price: u64
     ) {
-        let tier = if (new_price > old_price) {
-            // Price increased -> Low Interest
+        // 1. Strict Principal Protection: Stop interest updates if Bankrupt.
+        //    (The Oracle is already updated to `new_price` by the controller before calling this,
+        //     so `is_bankrupt` checks current state).
+        if (health_engine::is_bankrupt(loan, oracle)) {
+            return
+        };
+
+        // 2. Determine Tier based on Price Movement
+        let tier = if (new_price >= old_price) {
+            // Price increased or stayed same -> Safe Zone -> Low Interest
             TIER_LOW
-        } else if (new_price == old_price) {
-             // No change -> Keep Normal (or current) - equating to Normal for simplicity
-            TIER_NORMAL
         } else {
             // Price decreased
-            // Check magnitude of drop
             let delta = old_price - new_price;
             let drop_percent = (delta * 100) / old_price;
 
-            if (drop_percent >= SIGNIFICANT_DROP_PERCENT) {
-                // > 10% drop -> High Interest
-                TIER_HIGH
-            } else {
-                // Slight drop -> Normal/Slightly Increased (mapping "Slightly Increased" to NORMAL or a mid-tier)
-                // Prompt: "ETH price decreases slightly → interest increases slightly"
-                // Let's assume TIER_NORMAL is the baseline "slightly increased" from the "low" state of a bull market,
-                // or we could add a TIER_MEDIUM.
-                // Given 3 tiers usually suffice: Low (Bull), Normal (Bear/Crab), High (Crash).
+            if (drop_percent < DROP_THRESHOLD_MODERATE) {
+                // < 5% drop -> Safe Zone
+                TIER_LOW
+            } else if (drop_percent < DROP_THRESHOLD_HIGH) {
+                // 5% <= drop < 10% -> Moderate Zone
                 TIER_NORMAL
+            } else {
+                // >= 10% drop -> High Stress Zone
+                TIER_HIGH
             }
         };
 
         loan_core::set_interest_tier(loan, tier);
     }
 
-    /// Accessors for tiers (optional, for frontend/demo)
+    /// Accessors for tiers
     public fun tier_low(): u64 { TIER_LOW }
     public fun tier_normal(): u64 { TIER_NORMAL }
     public fun tier_high(): u64 { TIER_HIGH }

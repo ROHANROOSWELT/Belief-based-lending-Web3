@@ -39,7 +39,7 @@ module belief_lending::demo_controller {
         price_oracle_mock::set_price(oracle, new_price);
 
         // 3. Update Interest Model
-        interest_model::update_interest_tier(loan, old_price, new_price);
+        interest_model::update_interest_tier(loan, oracle, old_price, new_price);
 
         // 4. Check Health & Belief
         // If unsafe and not bankrupt, try to enter belief window.
