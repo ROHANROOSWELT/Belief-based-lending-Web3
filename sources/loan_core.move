@@ -80,4 +80,61 @@ module belief_lending::loan_core {
     public(package) fun set_interest_tier<L, C>(loan: &mut LoanObject<L, C>, tier: u64) {
         loan.current_interest_tier = tier;
     }
+
+    /// Reader for collateral amount
+    public fun get_collateral_amount<L, C>(loan: &LoanObject<L, C>): u64 {
+        balance::value(&loan.collateral)
+    }
+
+    /// Reader for borrowed amount
+    public fun get_borrowed_amount<L, C>(loan: &LoanObject<L, C>): u64 {
+        loan.borrowed_amount
+    }
+
+    /// Reader for status
+    public fun get_status<L, C>(loan: &LoanObject<L, C>): u8 {
+        loan.status
+    }
+
+    /// Reader for belief window expiry
+    public fun get_belief_window_expiry<L, C>(loan: &LoanObject<L, C>): u64 {
+        loan.belief_window_expiry
+    }
+
+    /// Reader for borrower
+    public fun get_borrower<L, C>(loan: &LoanObject<L, C>): address {
+        loan.borrower
+    }
+
+    /// Reader for lender
+    public fun get_lender<L, C>(loan: &LoanObject<L, C>): address {
+        loan.lender
+    }
+
+    // --- Package-Only Setters (Status & Belief) ---
+
+    public(package) fun set_status<L, C>(loan: &mut LoanObject<L, C>, new_status: u8) {
+        loan.status = new_status;
+    }
+
+    public(package) fun set_belief_window_expiry<L, C>(loan: &mut LoanObject<L, C>, expiry: u64) {
+        loan.belief_window_expiry = expiry;
+    }
+
+    // --- Package-Only Mutators for Recovery ---
+
+    public(package) fun add_collateral<L, C>(loan: &mut LoanObject<L, C>, extra: Balance<C>) {
+        balance::join(&mut loan.collateral, extra);
+    }
+
+    public(package) fun decrease_borrowed_amount<L, C>(loan: &mut LoanObject<L, C>, amount: u64) {
+        loan.borrowed_amount = loan.borrowed_amount - amount;
+    }
+
+    // --- Liquidation Helper ---
+
+    public(package) fun liquidate_collateral<L, C>(loan: &mut LoanObject<L, C>): Balance<C> {
+        loan.status = STATUS_LIQUIDATED;
+        balance::withdraw_all(&mut loan.collateral)
+    }
 }

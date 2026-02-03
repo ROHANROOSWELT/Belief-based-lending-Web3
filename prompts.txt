@@ -192,7 +192,40 @@ Prevent panic liquidations and enforce belief.
 
 > Implement a belief window mechanism for loans detected as unsafe but not bankrupt.
 >
+> When a loan becomes unsafe:## 📦 MODULE 5 — `belief_window.move` ⭐ (CORE MODULE)
+
+### (Delayed Liquidation Logic)
+
+### 🔹 Purpose
+
+Prevent panic liquidations and enforce belief.
+
+### 🔹 Detailed Prompt
+
+> Implement a belief window mechanism for loans detected as unsafe but not bankrupt.
+>
 > When a loan becomes unsafe:
+>
+> * it must enter `Belief` state
+> * liquidation must be temporarily blocked
+> * a belief window timer must start
+>
+> The module must:
+>
+> * store belief window expiry timestamp
+> * allow belief window to end early if health improves
+> * prevent liquidation during active belief
+>
+> Implement:
+>
+> * `enter_belief_window()`
+> * `is_belief_active()`
+>
+> Ensure:
+>
+> * belief window is per-loan
+> * belief does NOT apply to bankrupt loans
+
 >
 > * it must enter `Belief` state
 > * liquidation must be temporarily blocked
