@@ -1,85 +1,194 @@
 # Belief-Based Lending Protocol (Sui Move)
 
-> **"Belief-Based Lending"**: A novel DeFi lending protocol on Sui that introduces a **Belief Window**—a grace period for unsafe loans—preventing panic liquidations during temporary market volatility, while strictly enforcing **Lender Principal Protection**.
+**Belief-Based Lending** is a novel DeFi lending protocol built on **Sui** that eliminates panic liquidations by introducing **belief-priced time**.
+Instead of liquidating borrowers during temporary market volatility, the protocol allows *solvent* borrowers to pay higher interest to buy time — while enforcing **strict insolvency-only liquidation** to protect lenders.
 
-## 🌟 Core Concept
+> **Liquidation is a last resort for insolvency — not a risk management shortcut.**
 
-Traditional lending protocols liquidate borrowers immediately when their collateral ratio drops below a threshold. This often leads to unnecessary losses during "flash crashes" where prices recover quickly.
+---
 
-**Belief-Based Lending** changes this by introducing a dual-threshold system with a hard safety floor:
+## 🌟 Core Idea
 
-1.  **Unsafe Zone (100% - 120%)**: Triggers the **Belief Window**. Liquidation is **BLOCKED** as long as the loan remains solvent (`Collateral >= Debt`). Interest rates increase to price the risk.
-2.  **Bankruptcy Zone (< 100%)**: Triggers **Immediate Liquidation** when `Collateral < Debt`. **This overrides all belief logic.**
+Traditional DeFi protocols (Aave, Compound, etc.) liquidate loans as soon as a **risk threshold** is crossed — even if the collateral still fully covers the debt.
+This causes unnecessary liquidations during flash crashes and temporary drawdowns.
+
+**Belief-Based Lending changes this fundamental rule:**
+
+> **A loan is liquidated only when it becomes insolvent.**
+> As long as collateral ≥ principal + accrued interest, liquidation is impossible.
+
+Borrowers can remain exposed to volatility by paying higher interest — a **belief cost** — instead of being forcibly liquidated.
+
+---
+
+## 🧠 Economic Zones & Invariants
+
+### 1️⃣ Healthy Zone (≥ 120%)
+
+* **Condition:**
+  `collateral_value ≥ 1.2 × debt`
+* **Interest:** Normal (Base Rate)
+* **Liquidation:** ❌ Blocked
+* **Belief Window:** Not active
+
+The loan is safe and unstressed.
+
+---
+
+### 2️⃣ Unsafe / Belief Zone (100% – 120%)
+
+* **Condition:**
+  `debt ≤ collateral_value < 1.2 × debt`
+* **Status:** Unsafe (Belief Active)
+* **Interest:** Increased (Risk / Time Premium)
+* **Liquidation:** ❌ Blocked (even if belief window expires)
+
+This is the **core innovation**.
+
+The borrower is **not gambling** — they are paying interest to consume time while remaining solvent.
+Panic liquidations are permanently prevented in this zone.
+
+---
+
+### 3️⃣ Bankruptcy / Insolvency Zone (< 100%)
+
+* **Condition:**
+  `collateral_value < principal + accrued_interest`
+* **Status:** Insolvent
+* **Belief Window:** Ignored
+* **Recovery:** Blocked
+* **Liquidation:** ✅ Immediate
+
+At this point, waiting increases lender loss.
+Liquidation is mandatory and irreversible.
+
+---
 
 ## 🛡️ Strict Lender Protection
 
-The protocol is designed with a "Safety First" architecture. Lender principal recovery is prioritized, but panic liquidations of solvent loans are eliminated.
+The protocol enforces a **hard insolvency invariant**:
 
-### 1. Hard Safety Rule (Insolvency)
-If a loan's collateral value drops below **100%** of the debt (Insolvent):
-*   ❌ **Belief Window Bypassed**: The grace period is immediately revoked.
-*   ✅ **Immediate Liquidation**: The collateral is seized to cover the debt.
+> **Lender principal is never exposed once collateral can no longer cover debt.**
 
-### 2. Dynamic Interest Zones
-Interest rates adapt to market volatility to price the "belief" risk:
-*   **Safe Zone (< 5% Drop)**: Regular Low Interest.
-*   **Moderate Zone (5% - 10% Drop)**: Moderate Interest Increase.
-*   **Stress Zone (> 10% Drop)**: High Interest Increase.
+### Insolvency Rule
 
-## 📦 Modules & Architecture
+When `collateral < principal + accrued_interest`:
 
-The protocol is modularized into 8 distinct components (`sources/`):
+* ❌ Belief logic bypassed
+* ❌ Interest frozen
+* ❌ Recovery blocked
+* ✅ Immediate liquidation executed
 
-### 1. Core Layer
-*   **`loan_core.move`**: Defines the `LoanObject`, managing collateral, debt, and ownership.
-*   **`price_oracle_mock.move`**: Simulates ETH price feeds for development and testing.
+This guarantees lender recovery while avoiding premature liquidations.
 
-### 2. Logic Layer
-*   **`health_engine.move`**: Evaluates loan health (`Healthy`, `Unsafe`, `Bankrupt`) based on collateral value.
-*   **`interest_model.move`**: Implements the granular interest zones and safety blockers.
-*   **`belief_window.move`**: Manages the grace period logic.
+---
 
-### 3. Action Layer
-*   **`recovery_actions.move`**: Allows borrowers to rescue *non-bankrupt* loans.
-*   **`liquidation.move`**: Executes liquidations, strictly prioritizing bankruptcy cases.
+## 📈 Dynamic Interest = Price of Belief
 
-### 4. Experience Layer
-*   **`demo_controller.move`**: A unified interface to simulate the entire lifecycle (Open Loan → Market Crash → Recovery/Liquidation).
+Risk is priced through **interest**, not liquidation.
 
-## 🚀 Getting Started
+| Market Condition | Interest Behavior |
+| ---------------- | ----------------- |
+| Safe (≤ 5% drop) | Low / Base Rate   |
+| Moderate (5–10%) | Medium Increase   |
+| Stress (> 10%)   | High Increase     |
 
-### Prerequisites
-*   [Sui CLI](https://docs.sui.io/guides/developer/getting-started/sui-install) installed.
+Borrowers **choose** to remain exposed by paying higher interest — a mechanism not present in existing DeFi protocols.
 
-### Build the Project
-```bash
-sui move build
-```
+---
 
-### Run Tests
-The project includes a comprehensive automated test suite covering core logic, scenarios, and validation cases.
+## 🧩 Architecture Overview
 
-Run all tests:
+The protocol is modularized into **8 clean Move modules**:
+
+### Core Layer
+
+* `loan_core.move` – Loan object, collateral, debt, ownership
+* `price_oracle_mock.move` – Mock oracle for testing
+
+### Logic Layer
+
+* `health_engine.move` – Healthy / Unsafe / Bankrupt evaluation
+* `interest_model.move` – Volatility-based interest tiers
+* `belief_window.move` – Belief state & timing logic
+
+### Action Layer
+
+* `recovery_actions.move` – Repay or add collateral (solvent only)
+* `liquidation.move` – Insolvency-only liquidation enforcement
+
+### Experience Layer
+
+* `demo_controller.move` – End-to-end lifecycle simulation
+
+---
+
+## 🧪 Testing & Verification
+
+The project includes a **comprehensive automated test suite** validating:
+
+* Belief window activation
+* Liquidation protection
+* Recovery correctness
+* Insolvency enforcement
+* Interest tier dynamics
+* End-to-end economic invariants
+
+### Run All Tests
+
 ```bash
 sui move test
 ```
 
-Run specific narrative validation scenarios:
+### Run Narrative Validation
+
 ```bash
 sui move test narrative_tests
 ```
 
-## 🛠️ Usage Scenarios
+**Result:**
+✅ All tests pass
+✅ All economic invariants enforced
 
-### 1. The "Flash Crash" (Safe Haven)
-*   **Scenario**: ETH drops 7%. Loan LTV goes to 115% (Unsafe).
-*   **Protocol Action**: Enters **Belief Window**. Interest increases moderately. Liquidation is PAUSED.
-*   **Outcome**: Price rebounds. Loan returns to Healthy. **No Liquidation.**
+---
 
-### 2. The "True Crash" (Principal Protection)
-*   **Scenario**: ETH dumps 15%. Loan LTV drops to 109% (Bankrupt).
-*   **Protocol Action**: **Immediate Liquidation**. Belief window is ignored.
-*   **Outcome**: Lender recovers funds before the collateral becomes insolvent.
+## 🛠️ Example Scenarios
+
+### 🔹 Flash Crash (Safe Haven)
+
+* ETH drops 7%
+* Loan enters Unsafe Zone (115%)
+* Interest increases
+* Liquidation blocked
+* Price recovers → loan returns Healthy
+
+**Outcome:** No liquidation, no loss.
+
+---
+
+### 🔹 True Crash (Insolvency Protection)
+
+* ETH drops until collateral < debt
+* Insolvency triggered
+* Belief ignored
+* Immediate liquidation executed
+
+**Outcome:** Lender fully protected.
+
+---
+
+## 🧠 Why This Is Different From Aave
+
+| Feature                | Aave-like Protocols | Belief-Based Lending          |
+| ---------------------- | ------------------- | ----------------------------- |
+| Liquidation Trigger    | Risk Threshold      | Insolvency Only               |
+| Flash Crash Protection | ❌                  | ✅                            |
+| Time Buying            | ❌                  | ✅ (via interest)             |
+| Panic Liquidations     | Common              | Impossible                    |
+| Economic Philosophy    | Liquidate Early     | Liquidate Only When Necessary |
+
+---
 
 ## 📄 License
-MIT License.
+
+MIT License
