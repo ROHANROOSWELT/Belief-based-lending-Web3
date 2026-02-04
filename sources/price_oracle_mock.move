@@ -36,4 +36,18 @@ module belief_lending::price_oracle_mock {
     public fun set_price(oracle: &mut PriceOracle, new_price: u64) {
         oracle.price = new_price;
     }
+
+    #[test_only]
+    public fun create_for_testing(price: u64, ctx: &mut TxContext): PriceOracle {
+        PriceOracle {
+            id: object::new(ctx),
+            price,
+        }
+    }
+
+    #[test_only]
+    public fun destroy_for_testing(oracle: PriceOracle) {
+        let PriceOracle { id, price: _ } = oracle;
+        object::delete(id);
+    }
 }

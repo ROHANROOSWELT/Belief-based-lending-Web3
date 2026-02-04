@@ -138,7 +138,11 @@ module belief_lending::loan_core {
         balance::join(&mut loan.collateral, extra);
     }
 
-    public(package) fun decrease_borrowed_amount<L, C>(loan: &mut LoanObject<L, C>, amount: u64) {
+    public fun get_interest_tier<L, C>(loan: &LoanObject<L, C>): u64 {
+        loan.current_interest_tier
+    }
+
+    public fun decrease_borrowed_amount<L, C>(loan: &mut LoanObject<L, C>, amount: u64) {
         loan.borrowed_amount = loan.borrowed_amount - amount;
     }
 

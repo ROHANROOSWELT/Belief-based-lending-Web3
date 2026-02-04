@@ -79,6 +79,7 @@ module belief_lending::recovery_actions {
         if (health_engine::check_health(loan, oracle) == 0) {
             loan_core::set_status(loan, 0); // STATUS_HEALTHY
             loan_core::set_belief_window_expiry(loan, 0);
+            loan_core::set_interest_tier(loan, 1); // Reset to Low upon recovery
         }
     }
 }

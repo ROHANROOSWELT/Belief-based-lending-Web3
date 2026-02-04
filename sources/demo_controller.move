@@ -107,10 +107,7 @@ module belief_lending::demo_controller {
         clock: &Clock
     ): (u8, u64, u8, bool) {
         let status = loan_core::get_status(loan);
-        let tier = 0; // loan_core::current_interest_tier is private field without getter. 
-                      // I missed adding `get_interest_tier`. 
-                      // For now, I'll return 0 or add getter if I want perfection.
-                      // Let's assume 0 for check.
+        let tier = loan_core::get_interest_tier(loan);
         
         let health = health_engine::check_health(loan, oracle);
         let belief_active = belief_window::is_belief_active(loan, clock);

@@ -58,11 +58,17 @@ The protocol is modularized into 8 distinct components (`sources/`):
 sui move build
 ```
 
-### Run Tests (Simulated via Demo Controller)
-Since this is a prototype, use the `demo_controller` to verify flows:
+### Run Tests
+The project includes a comprehensive automated test suite covering core logic, scenarios, and validation cases.
+
+Run all tests:
 ```bash
-# Example command to run a test script (if implemented) or use Sui Console
-sui client call --package <PKG> --module demo_controller --function scenario_1_open_loan ...
+sui move test
+```
+
+Run specific narrative validation scenarios:
+```bash
+sui move test narrative_tests
 ```
 
 ## 🛠️ Usage Scenarios

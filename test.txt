@@ -1,0 +1,41 @@
+Belief-Based Lending - End-to-End Test Walkthrough
+This document records the results of the end-to-End testing scenario for the Belief-Based Lending protocol.
+
+Test Scenario
+Open Loan: Use demo_controller::scenario_1_open_loan to create a loan.
+Market Crash: Use demo_controller::scenario_2_market_crash to simulate a 33% ETH price drop (3000 -> 2000).
+Recovery: Restore ETH price to 3000 to observe interest rate relaxation.
+Execution Results
+1. Initial State (Loan Created)
+Action: Loan created with 400M SUI Collateral / 400M SUI Borrowed.
+Oracle Price: 3000 USD
+Interest Tier: 0 (Base Rate)
+Status: Healthy (0)
+2. Market Crash Simulation
+Action: Simulated price drop to 2000 USD (-33%).
+Result:
+Interest Tier: Increased to 3 (High Risk).
+Status: Remained Healthy (0) as collateral ratio was still sufficient.
+Belief Window: Did not activate (system remained safe).
+3. Price Recovery
+Action: Restored price to 3000 USD.
+Result:
+Interest Tier: Decreased to 1 (Elevated but lower than 3).
+Observation: The system successfully adapted the interest rate dynamically based on market volatility.
+Artifacts
+Loan Object: 0x102ac823337d282f666450b6181fe784c02c98bc3b77e6265b4f9cb686353f96
+Price Oracle: 0x01f11fe6416a243ea0105a837442b812b77b3ac27861b83fd21aa980f7474b41
+Conclusion
+The test confirms that the belief-based-lending protocol correctly:
+
+Tracks collateral and borrowed amounts.
+Responds to Oracle price updates.
+Dynamically adjusts the Interest Tier in response to market volatility.
+Bankruptcy Test Results
+1. Bankruptcy Trigger
+Action: Simulated drastic price drop to 1 USD (Collateral Ratio = 100% < 110%).
+Result: scenario_4_liquidation transaction succeeded.
+2. Final Loan State
+Status: 2 (Liquidated).
+Collateral: 0 (All cleaned out).
+Verification: Confirmed via object inspection.
