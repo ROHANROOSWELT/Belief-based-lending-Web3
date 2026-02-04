@@ -1,0 +1,29 @@
+BELIEF-BASED LENDING LOGIC
+
+1. Economic Zones
+
+   A. Healthy Zone (≥ 120%)
+      - Condition: `collateral_value >= 1.2 * debt`
+      - Interest: Normal (Base Tier)
+      - Liquidation: BLOCKED
+
+   B. Unsafe (Belief) Zone (100% - 120%)
+      - Condition: `1.0 * debt <= collateral_value < 1.2 * debt`
+      - Status: Unsafe / Belief Active
+      - Interest: Increases (Paying for time / Risk Premium)
+      - Liquidation: BLOCKED (Even if Belief Window expires, as long as Solvent)
+
+   C. Bankruptcy Zone (< 100%)
+      - Condition: `collateral_value < 1.0 * debt`
+      - Status: Bankrupt / Insolvent
+      - Belief Window: IGNORED
+      - Recovery: BLOCKED
+      - Liquidation: IMMEDIATE
+
+2. Liquidation Logic
+   
+   Liquidation occurs ONLY when:
+   `collateral_value < principal + accrued_interest`
+   (i.e., when the loan is strictly insolvent / Bankrupt).
+
+   Panic liquidations during temporary drops (where asset value still covers debt) are permanently prevented by the Unsafe Zone buffer.

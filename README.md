@@ -8,18 +8,16 @@ Traditional lending protocols liquidate borrowers immediately when their collate
 
 **Belief-Based Lending** changes this by introducing a dual-threshold system with a hard safety floor:
 
-1.  **Unsafe Threshold (120%)**: Triggers the **Belief Window**. Liquidation is paused for a fixed duration, giving the borrower time to recover or the market time to bounce back.
-2.  **Bankruptcy Threshold (110%)**: Triggers **Immediate Liquidation** to protect lender solvency. **This overrides all belief logic.**
+1.  **Unsafe Zone (100% - 120%)**: Triggers the **Belief Window**. Liquidation is **BLOCKED** as long as the loan remains solvent (`Collateral >= Debt`). Interest rates increase to price the risk.
+2.  **Bankruptcy Zone (< 100%)**: Triggers **Immediate Liquidation** when `Collateral < Debt`. **This overrides all belief logic.**
 
 ## 🛡️ Strict Lender Protection
 
-The protocol is designed with a "Safety First" architecture. Lender principal recovery is guaranteed at any cost.
+The protocol is designed with a "Safety First" architecture. Lender principal recovery is prioritized, but panic liquidations of solvent loans are eliminated.
 
-### 1. Hard Safety Rule (Bankruptcy)
-If a loan's collateral value drops to **110%** of the debt:
+### 1. Hard Safety Rule (Insolvency)
+If a loan's collateral value drops below **100%** of the debt (Insolvent):
 *   ❌ **Belief Window Bypassed**: The grace period is immediately revoked.
-*   ❌ **Interest Updates Stopped**: No further interest changes are allowed.
-*   ❌ **Recovery Blocked**: Borrowers cannot manually add collateral or repay to "save" the loan.
 *   ✅ **Immediate Liquidation**: The collateral is seized to cover the debt.
 
 ### 2. Dynamic Interest Zones

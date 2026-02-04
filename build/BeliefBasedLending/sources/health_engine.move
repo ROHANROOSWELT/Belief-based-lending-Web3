@@ -9,8 +9,8 @@ module belief_lending::health_engine {
     /// Collateralization Thresholds (in percentages)
     /// 120% - Below this, loan is "Unsafe" (Belief Window eligible)
     const THRESHOLD_UNSAFE: u64 = 120;
-    /// 110% - Below this, loan is "Bankrupt" (Immediate Liquidation)
-    const THRESHOLD_BANKRUPT: u64 = 110;
+    /// 100% - Below this, loan is "Bankrupt" (Immediate Liquidation)
+    const THRESHOLD_BANKRUPT: u64 = 100;
 
     /// Scaling factor for precision (e.g., 2 decimals for percentages).
     /// If we use simple integers 120 and 110, we treat them as direct percentages.

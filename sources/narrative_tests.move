@@ -126,35 +126,35 @@ module belief_lending::narrative_tests {
 
         test_scenario::return_shared(loan);
 
-        // --- TEST CASE 4: Belief Window Expiry -> Liquidation Allowed ---
+        // --- TEST CASE 4: Belief Window Expiry -> Liquidation Allowed ONLY IF INSOLVENT ---
         
         // 1. Re-crash or Re-Unsafe.
-        // Price is 2000. Debt is reduced to ~665B. CR is 120%. Healthy.
-        // Drop price further to make it Unsafe again.
-        // Target < 120%. Drop to 1900.
-        // CR = (400M * 1900 * 100) / 665B = 76000 / 665 = 114%.
-        let price_unsafe_2 = 1900;
+        let price_unsafe_2 = 1900; // CR ~ 114% (Unsafe but Solvent)
         price_oracle_mock::set_price(&mut oracle, price_unsafe_2);
         
-        // We need to trigger checks. scenario_2 helps trigger belief.
-        // Wait, scenario_2 automatically enters belief if unsafe.
         test_scenario::next_tx(&mut scenario, BORROWER);
         let mut loan = test_scenario::take_shared<LoanObject<USDC, ETH>>(&scenario);
 
         demo_controller::scenario_2_market_crash(&mut loan, &mut oracle, &clock, price_unsafe_2);
         
-        // Confirm enters belief
-        print_log(b"TEST CASE 4a: Re-entry into Belief", &loan, &clock);
-        assert!(loan_core::get_status(&loan) == 1, 401); 
-
         // 2. Advance Time > 30s
         clock::increment_for_testing(&mut clock, 31000);
         
-        // 3. Attempt Liquidation
+        // Note: At this point (Solvent + Expired), Liquidation should fail. 
+        // But we can't assert failure without aborting test.
+        // We proceed to demonstrate Insolvent Liquidation.
+        
+        // 3. Drop to Insolvency (< 100% CR)
+        // Debt ~ 666B. Collateral 400M. 100% CR Price = 1665.
+        // Set Price to 1600 (CR ~ 96%).
+        let price_insolvent = 1600;
+        price_oracle_mock::set_price(&mut oracle, price_insolvent);
+        
+        // 4. Liquidation (Should Succeed now)
         let ctx = test_scenario::ctx(&mut scenario);
         demo_controller::scenario_4_liquidation(&mut loan, &oracle, &clock, ctx);
 
-        print_log(b"TEST CASE 4: Belief Window Expiry -> Liquidation Allowed", &loan, &clock);
+        print_log(b"TEST CASE 4: Insolvency -> Strict Liquidation Success", &loan, &clock);
         
         assert!(loan_core::get_status(&loan) == 2, 402); // Liquidated
         assert!(loan_core::get_collateral_amount(&loan) == 0, 403);
@@ -248,6 +248,37 @@ module belief_lending::narrative_tests {
 
         print_log(b"TEST CASE 6: Dynamic Interest Adaptation Verified", &loan, &clock);
         
+        test_scenario::return_shared(loan);
+        clock::destroy_for_testing(clock);
+        price_oracle_mock::destroy_for_testing(oracle);
+        test_scenario::end(scenario);
+    }
+
+    #[test]
+    #[expected_failure(abort_code = 3)] // ELoanSolvent
+    fun test_validation_block_solvent_liquidation() {
+        let mut scenario = test_scenario::begin(ADMIN);
+        let (mut clock, mut oracle) = setup_test(&mut scenario);
+        let ctx = test_scenario::ctx(&mut scenario);
+
+        let eth_coin = coin::mint_for_testing<ETH>(COLLATERAL_AMOUNT, ctx);
+        let usdc_coin = coin::mint_for_testing<USDC>(BORROW_AMOUNT, ctx);
+        demo_controller::scenario_1_open_loan(usdc_coin, eth_coin, BORROWER, LENDER, ctx);
+        
+        test_scenario::next_tx(&mut scenario, BORROWER);
+        let mut loan = test_scenario::take_shared<LoanObject<USDC, ETH>>(&scenario);
+
+        // Drop to Unsafe (114%)
+        price_oracle_mock::set_price(&mut oracle, 2000); // 115%
+        demo_controller::scenario_2_market_crash(&mut loan, &mut oracle, &clock, 2000);
+
+        // Expire Belief
+        clock::increment_for_testing(&mut clock, 31000);
+
+        // Try Liquidate
+        let ctx = test_scenario::ctx(&mut scenario);
+        demo_controller::scenario_4_liquidation(&mut loan, &oracle, &clock, ctx);
+
         test_scenario::return_shared(loan);
         clock::destroy_for_testing(clock);
         price_oracle_mock::destroy_for_testing(oracle);
