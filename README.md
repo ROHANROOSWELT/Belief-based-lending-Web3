@@ -158,6 +158,26 @@ The protocol is modularized into **8 clean Move modules**:
 
 ---
 
+
+---
+
+## ⚡ Scalability & Concurrency
+
+This protocol leverages Sui's **object-centric data model** to achieve massive scalability.
+
+### 🧩 Global Pools vs. Independent Objects
+
+**Traditional DeFi (EVM):**
+*   Uses a single "Pool Contract" with a global mapping of `User -> Balance`.
+*   **Bottleneck:** Every interaction (borrow, repay, liquidate) touches the same state, forcing sequential execution.
+
+**Belief-Based Lending (Sui):**
+*   Each loan is a **distinct, independent Object** (`LoanObject`).
+*   **Parallelism:** Interactions with Loan A do not affect Loan B.
+*   **Result:** Sui validators can process thousands of loan operations **in parallel**, avoiding network congestion and gas spikes during high-volatility events.
+
+---
+
 ## 🧪 Testing & Verification
 
 The project includes a **comprehensive automated test suite** validating:
