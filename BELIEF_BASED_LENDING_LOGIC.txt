@@ -18,7 +18,7 @@ BELIEF-BASED LENDING LOGIC
       - Status: Bankrupt / Insolvent
       - Belief Window: IGNORED
       - Recovery: BLOCKED
-      - Liquidation: IMMEDIATE
+      - Liquidation: IMMEDIATEE
 
 2. Liquidation Logic
    

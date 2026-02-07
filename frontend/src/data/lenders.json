@@ -1,0 +1,20 @@
+[
+    {
+        "id": "lender-genesis",
+        "name": "Genesis Protocol Pool",
+        "liquidity": 1000000,
+        "minCollateral": 120,
+        "baseApy": "4.5%",
+        "beliefApy": "18.0%",
+        "terms": "Standard Belief-Based Terms"
+    },
+    {
+        "id": "lender-inst-1",
+        "name": "Alpha Capital Liquidity",
+        "liquidity": 500000,
+        "minCollateral": 125,
+        "baseApy": "4.2%",
+        "beliefApy": "16.5%",
+        "terms": "Premium Borrowers Only"
+    }
+]

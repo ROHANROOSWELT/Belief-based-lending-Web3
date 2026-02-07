@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Belief-Based Lending | Dashboard</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+    <!-- Background Layer -->
+    <div class="background-layer">
+        <div class="wave-shape"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Navigation -->
+        <nav class="top-nav">
+            <div class="logo-section">
+                <span class="logo-mark">BBL</span>
+                <span class="protocol-name">Belief-Based Lending</span>
+            </div>
+            
+            <div class="nav-links">
+                <a href="#" class="active">Dashboard</a>
+                <a href="#">Borrow</a>
+                <a href="#">Lend</a>
+                <a href="#">Risk</a>
+                <a href="#">Docs</a>
+            </div>
+
+            <div class="nav-actions">
+                <div class="theme-toggle">
+                    <button id="theme-btn" aria-label="Toggle Theme">
+                        <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+                        <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                    </button>
+                </div>
+                <div class="wallet-status">
+                    <span class="status-dot connected"></span>
+                    <span class="address">0x23...8A1</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Grid -->
+        <main class="dashboard-grid">
+            
+            <!-- Belief Health Panel -->
+            <section class="card belief-health-card">
+                <header class="card-header">
+                    <h2>Belief Health</h2>
+                    <span class="status-badge stable">Solvent</span>
+                </header>
+                <div class="health-visual">
+                    <!-- SVG implementation of the belief curve/progress -->
+                    <svg class="belief-curve" viewBox="0 0 300 100">
+                        <path class="curve-bg" d="M10,90 Q150,90 290,90" fill="none" stroke-width="4" />
+                        <path class="curve-fill" d="M10,90 Q150,90 290,90" fill="none" stroke-width="4" stroke-dasharray="280" stroke-dashoffset="60" />
+                        <circle class="current-position" cx="230" cy="90" r="6" />
+                    </svg>
+                    <div class="health-metrics">
+                        <div class="metric">
+                            <span class="label">Belief Score</span>
+                            <span class="value">82/100</span>
+                        </div>
+                        <div class="metric">
+                            <span class="label">Time Buffer</span>
+                            <span class="value">14 Days</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="card-explainer">Your position is healthy. Belief score increases as you hold without borrowing against volatility.</p>
+            </section>
+
+            <!-- Borrow Position Card -->
+            <section class="card borrow-position-card">
+                <header class="card-header">
+                    <h2>Active Position</h2>
+                </header>
+                <div class="position-details">
+                    <div class="detail-row">
+                        <span class="label">Collateral Value</span>
+                        <span class="value">$124,500.00</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Borrowed Amount</span>
+                        <span class="value">$45,000.00 USDC</span>
+                    </div>
+                    <div class="detail-row highlight">
+                        <span class="label">Time to Insovency</span>
+                        <span class="value warning">4 Days</span>
+                    </div>
+                    <div class="detail-row">
+                        <span class="label">Current APY</span>
+                        <span class="value">4.5%</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Buy Time Module -->
+            <section class="card buy-time-card">
+                <header class="card-header">
+                    <h2>Extend Time Buffer</h2>
+                </header>
+                <div class="slider-container">
+                    <div class="slider-labels">
+                        <span>Min Interest</span>
+                        <span>Max Time</span>
+                    </div>
+                    <input type="range" min="1" max="100" value="20" class="belief-slider" id="time-slider">
+                    <div class="slider-value-display">
+                        <span id="slider-days">+7 Days</span>
+                    </div>
+                </div>
+                <div class="projection-box">
+                    <div class="projection-row">
+                        <span>New Interest Rate</span>
+                        <span class="dynamic-value" id="projected-apy">5.2%</span>
+                    </div>
+                    <div class="projection-row">
+                        <span>Cost</span>
+                        <span class="dynamic-value">$12.50 / day</span>
+                    </div>
+                </div>
+                <button class="action-btn primary">Purchase Time</button>
+            </section>
+
+            <!-- Lender View -->
+            <section class="card lender-view-card">
+                <header class="card-header">
+                    <h2>Lender Yield</h2>
+                </header>
+                <div class="yield-display">
+                    <div class="big-apy">5.8%</div>
+                    <span class="apy-label">Current APY</span>
+                    <div class="trend-indicator up">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        <span>Rising due to borrower stress</span>
+                    </div>
+                </div>
+                <div class="pool-stats">
+                    <div class="stat">
+                        <span class="label">Total Supplied</span>
+                        <span class="value">$4.2M</span>
+                    </div>
+                    <div class="stat">
+                        <span class="label">Utilization</span>
+                        <span class="value">68%</span>
+                    </div>
+                </div>
+                <button class="action-btn secondary">Supply Liquidity</button>
+            </section>
+
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
