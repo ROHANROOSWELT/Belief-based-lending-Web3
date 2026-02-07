@@ -97,6 +97,41 @@ Borrowers **choose** to remain exposed by paying higher interest — a mechanism
 
 ---
 
+## 💻 Frontend Application
+
+The project includes a comprehensive **React-based frontend** to visualize and interact with the protocol.
+
+### ✨ Features
+
+*   **Interactive Dashboard**: Real-time view of borrowing capacity, health factor, and loan status.
+*   **Risk Transparency**: Visual indicators for **Healthy**, **Belief**, and **Bankruptcy** zones.
+*   **Demo Mode Control**: "Judges Demo Panel" to simulate ETH price crashes and time lapses.
+*   **Responsive UI**: Custom CSS design with a premium, institutional financial aesthetic.
+
+### 🚀 Getting Started
+
+**Prerequisites:** Node.js (v16+) and npm.
+
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd frontend
+    ```
+
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+
+3.  **Start the local development server:**
+    ```bash
+    npm run dev
+    ```
+
+4.  **Open the App:**
+    Visit `http://localhost:5173` (or the URL provided in the terminal) to test the application.
+
+---
+
 ## 🧩 Architecture Overview
 
 The protocol is modularized into **8 clean Move modules**:
